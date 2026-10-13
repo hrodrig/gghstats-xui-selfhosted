@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gghstats-xui.backendName" . }}
+  labels:
+    {{- include "gghstats-xui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  replicas: {{ .Values.gghstats.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gghstats-xui.labels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      labels:
+        {{- include "gghstats-xui.labels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: gghstats
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.gghstats.image.repository }}:{{ .Values.gghstats.image.tag }}"
+          imagePullPolicy: {{ .Values.gghstats.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.gghstats.service.targetPort | default 8080 }}
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /api/v1/healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/v1/healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          env:
+            - name: GGHSTATS_GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default .Values.gghstats.githubToken.secretName .Values.gghstats.githubToken.existingSecret }}
+                  key: {{ .Values.gghstats.githubToken.secretKey }}
+            - name: GGHSTATS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default .Values.apiToken.secretName .Values.apiToken.existingSecret }}
+                  key: {{ .Values.apiToken.secretKey }}
+            - name: GGHSTATS_HOST
+              value: {{ .Values.gghstats.env.host | quote }}
+            - name: GGHSTATS_PORT
+              value: {{ .Values.gghstats.env.port | quote }}
+            - name: GGHSTATS_DB
+              value: {{ .Values.gghstats.env.dbPath | quote }}
+            - name: GGHSTATS_API_ONLY
+              value: {{ .Values.gghstats.env.apiOnly | default "true" | quote }}
+            - name: GGHSTATS_FILTER
+              value: {{ .Values.gghstats.env.filter | quote }}
+            - name: GGHSTATS_INCLUDE_PRIVATE
+              value: {{ .Values.gghstats.env.includePrivate | quote }}
+            - name: GGHSTATS_REPORT_PRIVATE
+              value: {{ .Values.gghstats.env.reportPrivate | default "false" | quote }}
+            - name: GGHSTATS_SYNC_INTERVAL
+              value: {{ .Values.gghstats.env.syncInterval | quote }}
+            {{- if .Values.gghstats.env.syncOnStartup }}
+            - name: GGHSTATS_SYNC_ON_STARTUP
+              value: {{ .Values.gghstats.env.syncOnStartup | quote }}
+            {{- end }}
+            {{- if .Values.gghstats.env.logLevel }}
+            - name: GGHSTATS_LOG_LEVEL
+              value: {{ .Values.gghstats.env.logLevel | quote }}
+            {{- end }}
+            - name: TMPDIR
+              value: /tmp
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            {{- toYaml .Values.gghstats.resources | nindent 12 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: data
+          {{- if .Values.gghstats.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "gghstats-xui.backendName" . }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: tmp
+          emptyDir: {}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}

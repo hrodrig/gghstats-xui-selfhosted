@@ -1,0 +1,20 @@
+gghstats-xui is deployed!
+
+Two Deployments:
+  - {{ template "gghstats-xui.backendName" . }}  → gghstats (API-only, internal)
+  - {{ template "gghstats-xui.uiName" . }}       → gghstats-xui (BFF dashboard)
+
+The BFF targets the backend at:
+  GGHSTATS_API_BASE = {{ default (printf "http://%s:%s" (include "gghstats-xui.backendName" .) (.Values.gghstats.service.port | default 8080 | toString)) .Values.xui.env.apiBase }}
+
+Get the dashboard URL:
+  kubectl get svc {{ template "gghstats-xui.uiName" . }}
+
+Port-forward to try it locally:
+  kubectl port-forward svc/{{ template "gghstats-xui.uiName" . }} 3000:{{ .Values.xui.service.port }}
+
+Then open http://localhost:3000
+
+Secrets:
+  - GitHub token: {{ default .Values.gghstats.githubToken.secretName .Values.gghstats.githubToken.existingSecret }}
+  - API token:    {{ default .Values.apiToken.secretName .Values.apiToken.existingSecret }}

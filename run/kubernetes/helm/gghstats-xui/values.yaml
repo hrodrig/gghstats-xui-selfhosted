@@ -1,0 +1,119 @@
+fullnameOverride: ""
+
+# -----------------------------------------------------------------------------
+# gghstats backend (API-only). Not exposed outside the cluster.
+# -----------------------------------------------------------------------------
+gghstats:
+  replicaCount: 1
+
+  image:
+    repository: ghcr.io/hrodrig/gghstats
+    tag: "v1.6.6"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+
+  env:
+    host: "0.0.0.0"
+    port: "8080"
+    dbPath: "/data/gghstats.db"
+    # Run as API-only (no dashboard HTML) — required by gghstats-xui.
+    apiOnly: "true"
+    filter: "*"
+    includePrivate: "false"
+    reportPrivate: "false"
+    syncInterval: "1h"
+    syncOnStartup: ""
+    logLevel: ""
+
+  # GitHub token for traffic sync. Prefer existingSecret over value.
+  githubToken:
+    existingSecret: ""
+    secretName: gghstats-xui-github-secret
+    secretKey: github-token
+    value: ""
+
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+# -----------------------------------------------------------------------------
+# Shared API token. The BFF presents it as x-api-token to the backend.
+# Same value is set on both containers.
+# -----------------------------------------------------------------------------
+apiToken:
+  existingSecret: ""
+  secretName: gghstats-xui-api-secret
+  # Key name inside the secret (default below) and inside existingSecret.
+  secretKey: api-token
+  value: ""
+
+# -----------------------------------------------------------------------------
+# gghstats-xui BFF (dashboard). The only public surface.
+# -----------------------------------------------------------------------------
+xui:
+  replicaCount: 1
+
+  image:
+    repository: ghcr.io/hrodrig/gghstats-xui
+    tag: "v0.1.0"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    # Port the BFF listens on (adapter-node PORT env). Tune if you set xui.env.port.
+    port: 3000
+    targetPort: 3000
+
+  env:
+    # Leave empty → the BFF auto-targets the in-cluster backend at
+    # http://<release>-gghstats-xui-backend:8080. Set an absolute URL to point
+    # at an external gghstats instead (then the backend Deployment above is optional).
+    apiBase: ""
+    port: "3000"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: "500m"
+      memory: 256Mi
+
+# -----------------------------------------------------------------------------
+# Pod/container security (applies to both Deployments).
+# -----------------------------------------------------------------------------
+imagePullSecrets: []
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

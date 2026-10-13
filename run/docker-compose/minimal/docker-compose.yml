@@ -1,0 +1,76 @@
+# gghstats-xui self-hosted: gghstats (API-only backend) + gghstats-xui (BFF dashboard).
+#
+# Two containers on an internal network:
+#   - gghstats  → serves the API only (GGHSTATS_API_ONLY=true) on :8080, SQLite in /data
+#   - xui       → BFF that proxies browser /api/* calls to http://gghstats:8080 (adds x-api-token)
+#
+# The xui endpoint is the only public surface. gghstats is NOT exposed on the host.
+#
+# Usage (from repository root):
+#   export GGHSTATS_HOST_DATA=/path/on/host
+#   mkdir -p "$GGHSTATS_HOST_DATA"
+#   cp run/common/.env.example "${GGHSTATS_HOST_DATA}/.env"   # edit; set GGHSTATS_API_TOKEN + GGHSTATS_HOST_DATA
+#   docker compose --env-file "${GGHSTATS_HOST_DATA}/.env" \
+#     -f run/docker-compose/minimal/docker-compose.yml up -d
+#
+# Smoke check: curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/
+
+name: gghstats-xui
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  backend:
+    name: gghstats_xui_backend
+    driver: bridge
+    internal: true
+
+services:
+  gghstats:
+    image: ghcr.io/hrodrig/gghstats:${GGHSTATS_VERSION:-v1.6.6}
+    container_name: gghstats-xui-backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - GGHSTATS_GITHUB_TOKEN=${GGHSTATS_GITHUB_TOKEN:-}
+      - GGHSTATS_DEMO=${GGHSTATS_DEMO:-}
+      - GGHSTATS_HOST=0.0.0.0
+      - GGHSTATS_PORT=8080
+      - GGHSTATS_DB=/data/gghstats.db
+      - GGHSTATS_API_ONLY=${GGHSTATS_API_ONLY:-true}
+      - GGHSTATS_API_TOKEN=${GGHSTATS_API_TOKEN:-}
+      - GGHSTATS_FILTER=${GGHSTATS_FILTER:-*}
+      - GGHSTATS_SYNC_INTERVAL=${GGHSTATS_SYNC_INTERVAL:-1h}
+      - GGHSTATS_INCLUDE_PRIVATE=${GGHSTATS_INCLUDE_PRIVATE:-false}
+      - GGHSTATS_REPORT_PRIVATE=${GGHSTATS_REPORT_PRIVATE:-false}
+      - GGHSTATS_LOG_LEVEL=${GGHSTATS_LOG_LEVEL:-info}
+    volumes:
+      # Host path for SQLite (prefer absolute, e.g. /var/lib/gghstats). Default: repo data/ relative to this file.
+      - ${GGHSTATS_HOST_DATA:-../../../data}:/data
+    networks:
+      - backend
+    logging: *default-logging
+
+  xui:
+    image: ghcr.io/hrodrig/gghstats-xui:${GGHSTATS_XUI_VERSION:-v0.1.0}
+    container_name: gghstats-xui
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - gghstats
+    environment:
+      - GGHSTATS_API_BASE=http://gghstats:8080
+      - GGHSTATS_API_TOKEN=${GGHSTATS_API_TOKEN:-}
+      - PORT=3000
+      - HOST=0.0.0.0
+    ports:
+      - "${XUI_PORT:-3000}:3000"
+    networks:
+      - backend
+    logging: *default-logging

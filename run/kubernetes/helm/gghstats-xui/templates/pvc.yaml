@@ -1,0 +1,21 @@
+{{- if .Values.gghstats.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "gghstats-xui.backendName" . }}-data
+  labels:
+    {{- include "gghstats-xui.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    {{- range .Values.gghstats.persistence.accessModes }}
+    - {{ . }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.gghstats.persistence.size }}
+  {{- if .Values.gghstats.persistence.storageClass }}
+  storageClassName: {{ .Values.gghstats.persistence.storageClass }}
+  {{- end }}
+{{- end }}

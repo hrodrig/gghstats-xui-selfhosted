@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gghstats-xui.uiName" . }}
+  labels:
+    {{- include "gghstats-xui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ui
+spec:
+  type: {{ .Values.xui.service.type }}
+  selector:
+    {{- include "gghstats-xui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ui
+  ports:
+    - port: {{ .Values.xui.service.port }}
+      targetPort: {{ .Values.xui.service.targetPort | default 3000 }}
+      protocol: TCP
+      name: http
