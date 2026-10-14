@@ -1,0 +1,20 @@
+# UI-only Helm values — no in-cluster gghstats (backend on another host/VPS/network).
+#
+#   mkdir -p ~/gghstats-xui-selfhosted-data
+#   cp run/kubernetes/examples/values.ui-only.example.yaml ~/gghstats-xui-selfhosted-data/values.yaml
+#   # edit apiBase + apiToken secret; create only the API secret (no GitHub PAT here)
+#   helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats \
+#     -f ~/gghstats-xui-selfhosted-data/values.yaml
+#
+# The shared API token must match the external gghstats instance.
+
+gghstats:
+  enabled: false
+
+apiToken:
+  existingSecret: gghstats-xui-api-secret
+
+xui:
+  env:
+    # Absolute URL of an existing gghstats serve / API (API-only or full).
+    apiBase: "https://gghstats.example.com"

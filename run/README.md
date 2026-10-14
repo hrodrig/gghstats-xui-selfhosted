@@ -10,6 +10,7 @@ Pick a mode below. Commands are documented in each subdirectory's `README.md`.
 | [`docker/`](docker/) | **`docker run`** with the GHCR xui image — dashboard only, pointing at an external gghstats. |
 | [`docker-compose/minimal/`](docker-compose/minimal/) | **Two-container stack** — gghstats (API-only) + xui (BFF), internal network. The default self-hosted path. |
 | [`kubernetes/helm/`](kubernetes/helm/) | **Helm chart** — two Deployments + PVC + Secret. No Ingress (route it yourself). |
+| [`kubernetes/examples/`](kubernetes/examples/) | **Beside the chart** (out of chart scope): copy into **`~/gghstats-xui-selfhosted-data/`** (`values.yaml`, Traefik `IngressRoute`). |
 
 Always use published image tags that match your desired releases:
 
