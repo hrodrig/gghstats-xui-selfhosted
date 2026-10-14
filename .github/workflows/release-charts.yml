@@ -1,7 +1,11 @@
 # Publishes Helm charts to GitHub Pages (index.yaml + .tgz on gh-pages) on tag v*.
 # Repo tag follows root VERSION; Chart.yaml `version:` is the Helm package semver.
+# chart-releaser only packages charts with file changes vs the last baseline; the tagged
+# commit must include a diff under run/kubernetes/helm/ (e.g. bump Chart.yaml version)
+# or the job succeeds with “No chart changes detected” and does not update gh-pages.
 # See: https://github.com/helm/chart-releaser-action
 # Repo Settings → Pages: Source = branch gh-pages, folder / (root).
+# skip_existing: re-runs would otherwise hit GitHub 422 (chart release tag already exists).
 name: Release Charts
 
 on:
@@ -39,7 +43,8 @@ jobs:
             git checkout --orphan gh-pages-init
             git rm -rf . 2>/dev/null || true
             printf '%s\n' '# Helm chart index (updated by chart-releaser)' > README.md
-            git add README.md
+            : > .nojekyll
+            git add README.md .nojekyll
             git commit -m "chore: initialize gh-pages for Helm chart index"
             git push origin HEAD:gh-pages
             git checkout "$TAG_SHA"
@@ -50,5 +55,6 @@ jobs:
         uses: helm/chart-releaser-action@v1.7.0
         with:
           charts_dir: run/kubernetes/helm
+          skip_existing: true
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

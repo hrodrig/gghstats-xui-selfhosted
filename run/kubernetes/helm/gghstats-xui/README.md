@@ -9,25 +9,50 @@ Two Deployments on Kubernetes:
 
 The BFF auto-targets the in-cluster backend at `http://<release>-gghstats-xui-backend:8080` (override via `xui.env.apiBase`). The shared API token is set on both containers from a Secret.
 
-## Install
+## Install from the Helm repository (recommended)
+
+After the first chart publish (annotated tag **`v*`** on **`main`** → chart-releaser → **`gh-pages`**), install without cloning:
 
 ```bash
-helm install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
-  --set gghstats.githubToken.value=YOUR_GITHUB_TOKEN \
-  --set apiToken.value=YOUR_SHARED_API_TOKEN
+helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
+helm repo update
+helm search repo gghstats-xui -l
 ```
 
 **Secrets — prefer `existingSecret` over `value`** (don't put tokens in `--set`):
 
 ```bash
+kubectl create namespace gghstats
 kubectl create secret generic gghstats-xui-github-secret -n gghstats \
   --from-literal=github-token=YOUR_GITHUB_TOKEN
 kubectl create secret generic gghstats-xui-api-secret -n gghstats \
   --from-literal=api-token=YOUR_SHARED_API_TOKEN
 
-helm install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
+helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
   --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
   --set apiToken.existingSecret=gghstats-xui-api-secret
+```
+
+Use **`helm show values gghstats-xui/gghstats-xui`** for defaults. Pin with **`--version`** from **`helm search`** (chart **`version:`**, not the repo tag). If **`helm repo add`** fails, the index may not be live yet — use **from a git clone** below.
+
+Index: [index.yaml](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) · packages on [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases) as **`gghstats-xui-<chart-version>.tgz`**.
+
+## Install from a git clone
+
+From the repository root of [gghstats-xui-selfhosted](https://github.com/hrodrig/gghstats-xui-selfhosted):
+
+```bash
+helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
+  --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
+  --set apiToken.existingSecret=gghstats-xui-api-secret
+```
+
+Quick path with inline values (dev only — prefer secrets above):
+
+```bash
+helm install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
+  --set gghstats.githubToken.value=YOUR_GITHUB_TOKEN \
+  --set apiToken.value=YOUR_SHARED_API_TOKEN
 ```
 
 ## Routing (Traefik IngressRoute)

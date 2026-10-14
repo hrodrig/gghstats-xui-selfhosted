@@ -7,6 +7,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Document **Helm repo** install from GitHub Pages (`helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted`).
+- Harden **Release Charts**: `skip_existing`, bootstrap **`.nojekyll`** on first **`gh-pages`**.
+
 ## [0.1.0] - 2026-10-12
 
 ### Added
