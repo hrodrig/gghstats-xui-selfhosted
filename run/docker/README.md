@@ -10,7 +10,7 @@ docker run -d \
   -e GGHSTATS_API_TOKEN=your-shared-token \
   -p 3000:3000 \
   --name gghstats-xui \
-  ghcr.io/hrodrig/gghstats-xui:v0.1.0
+  ghcr.io/hrodrig/gghstats-xui:v0.1.3
 ```
 
 - **`GGHSTATS_API_BASE`** — the gghstats base URL (without `/api`), e.g. `https://stats.example.com` or `http://127.0.0.1:8080` for a local api-only backend.
