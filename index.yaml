@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   gghstats-xui:
   - apiVersion: v2
+    appVersion: 0.1.3
+    created: "2026-10-14T04:03:04.969816579Z"
+    description: gghstats (API-only) + gghstats-xui (BFF dashboard) on Kubernetes
+    digest: 104101df298ad5f0997f26e0e506fe87df748bb5a6374a7e7d501546a86bf1be
+    name: gghstats-xui
+    type: application
+    urls:
+    - https://github.com/hrodrig/gghstats-xui-selfhosted/releases/download/gghstats-xui-0.2.0/gghstats-xui-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
     appVersion: 0.1.0
     created: "2026-10-14T00:34:17.441007674Z"
     description: gghstats (API-only) + gghstats-xui (BFF dashboard) on Kubernetes
@@ -11,4 +21,4 @@ entries:
     urls:
     - https://github.com/hrodrig/gghstats-xui-selfhosted/releases/download/gghstats-xui-0.1.0/gghstats-xui-0.1.0.tgz
     version: 0.1.0
-generated: "2026-10-14T00:34:17.441012744Z"
+generated: "2026-10-14T04:03:04.969825285Z"
