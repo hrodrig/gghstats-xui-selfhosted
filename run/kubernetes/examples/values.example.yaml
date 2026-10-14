@@ -1,11 +1,13 @@
 # Example Helm values for gghstats-xui — chart scope only.
 #
-# Copy outside the clone (e.g. ~/gghstats-xui-values.yaml), edit, then:
+# Copy into a personal data directory outside the clone, edit, then:
+#   mkdir -p ~/gghstats-xui-selfhosted-data
+#   cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-selfhosted-data/values.yaml
 #   helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats \
-#     -f ~/gghstats-xui-values.yaml
+#     -f ~/gghstats-xui-selfhosted-data/values.yaml
 #
 # Out of scope for this file and for the chart: Ingress / IngressRoute / DNS / TLS.
-# Route the UI with a separate manifest — see traefik-ingressroute.yaml (copy + edit).
+# Route the UI with a separate manifest under the same directory — see traefik-ingressroute.yaml.
 
 gghstats:
   githubToken:

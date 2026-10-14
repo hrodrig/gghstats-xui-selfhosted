@@ -136,24 +136,25 @@ docker compose --env-file "${GGHSTATS_HOST_DATA}/.env" -f run/docker-compose/min
 
 **Naming:** this repository is **`gghstats-xui-selfhosted`**. Chart path **`run/kubernetes/helm/gghstats-xui/`** — chart name **`gghstats-xui`**. Packages + [**`index.yaml`**](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) on GitHub Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases).
 
-**Install** (local values — do not commit site hosts here):
+**Install** (personal files under **`~/gghstats-xui-selfhosted-data/`** — never in this clone):
 
 ```bash
 helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
 helm repo update
 # Secrets first — chart README step 2
-cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-values.yaml
-# edit ~/gghstats-xui-values.yaml
+mkdir -p ~/gghstats-xui-selfhosted-data
+cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-selfhosted-data/values.yaml
+# edit ~/gghstats-xui-selfhosted-data/values.yaml
 helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
-  -f ~/gghstats-xui-values.yaml
+  -f ~/gghstats-xui-selfhosted-data/values.yaml
 ```
 
 **Route the UI** (separate file, out of chart scope):
 
 ```bash
-cp run/kubernetes/examples/traefik-ingressroute.yaml ~/gghstats-xui-ingressroute.yaml
+cp run/kubernetes/examples/traefik-ingressroute.yaml ~/gghstats-xui-selfhosted-data/traefik-ingressroute.yaml
 # edit Host(`xui.example.com`), service <release>-gghstats-xui-ui, certResolver
-kubectl apply -f ~/gghstats-xui-ingressroute.yaml
+kubectl apply -f ~/gghstats-xui-selfhosted-data/traefik-ingressroute.yaml
 ```
 
 **Step-by-step:** [chart README](run/kubernetes/helm/gghstats-xui/README.md) · [examples](run/kubernetes/examples/)
