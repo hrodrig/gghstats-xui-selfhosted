@@ -115,10 +115,24 @@ docker compose --env-file "${GGHSTATS_HOST_DATA}/.env" -f run/docker-compose/min
 
 **Goal:** gghstats (API-only) + xui (BFF) as two Deployments, with a PVC for the backend SQLite and the shared API token in a Secret.
 
-The chart ships **no Ingress** — only `ClusterIP` Services. Route the UI yourself (e.g. a Traefik `IngressRoute`). See the [chart README](run/kubernetes/helm/gghstats-xui/README.md) for the install commands, secret setup, and a Traefik `IngressRoute` example.
+The chart ships **no Ingress** — only `ClusterIP` Services. Route the UI yourself (e.g. a Traefik `IngressRoute`). See the [chart README](run/kubernetes/helm/gghstats-xui/README.md) for secrets, Traefik `IngressRoute`, and full options.
+
+**Naming:** this repository is **`gghstats-xui-selfhosted`**. The chart lives under **`run/kubernetes/helm/gghstats-xui/`** — chart name **`gghstats-xui`**. Packaged charts and [**`index.yaml`**](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) publish to GitHub Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases) after the first **`v*`** tag on **`main`**.
+
+**Install from the Helm repo (recommended after first chart publish):**
 
 ```bash
-helm install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
+helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
+helm repo update
+helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
+  --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
+  --set apiToken.existingSecret=gghstats-xui-api-secret
+```
+
+If **`helm repo add`** fails, use a clone until **`index.yaml`** is live:
+
+```bash
+helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
   --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
   --set apiToken.existingSecret=gghstats-xui-api-secret
 ```
@@ -169,7 +183,7 @@ Three independent numbers. Upgrade the dashboard or backend by editing the match
 
 Same mold as [gghstats-selfhosted](https://github.com/hrodrig/gghstats-selfhosted): topic branch → PR → `develop` → (ship) PR → `main` → annotated tag `v*`. Never push `develop`/`main` directly. No `uat`. See `make gitflow`, [AGENTS.md](AGENTS.md), and [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**CI:** PR → Helm lint + kubeconform (`.github/workflows/helm-lint.yml`). **Chart publish:** tag `v*` → chart-releaser → `gh-pages`.
+**CI:** PR → Helm lint + kubeconform (`.github/workflows/helm-lint.yml`). **Chart publish:** annotated tag **`v*`** on **`main`** → chart-releaser → **`gh-pages`** ([`index.yaml`](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml)). One-time: **Settings → Pages → Source** = branch **`gh-pages`**, folder **`/`**.
 
 **[↑ Contents](#table-of-contents)**
 
