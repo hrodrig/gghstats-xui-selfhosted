@@ -56,9 +56,14 @@ kubectl create secret generic gghstats-xui-api-secret -n gghstats \
 
 Keep operator files under **`~/gghstats-xui-selfhosted-data/`** (same idea as Compose **`GGHSTATS_HOST_DATA`**: outside the clone). Day-to-day: no edits to this repository.
 
+#### Recommended — Helm repository (GitHub Pages)
+
+Published packages + [index.yaml](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) on Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases) as **`gghstats-xui-<chart-version>.tgz`**.
+
 ```bash
 helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
 helm repo update
+helm search repo gghstats-xui/gghstats-xui --versions | head
 
 mkdir -p ~/gghstats-xui-selfhosted-data
 cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-selfhosted-data/values.yaml
@@ -66,18 +71,25 @@ cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-selfhosted-data/va
 
 helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
   -f ~/gghstats-xui-selfhosted-data/values.yaml
+# optional pin: --version 0.2.0
 ```
 
-Use **`helm show values gghstats-xui/gghstats-xui`** for defaults. Pin with **`--version`** from **`helm search`** (chart **`version:`**, not the repo Git tag).
+Use **`helm show values gghstats-xui/gghstats-xui`** for defaults. Chart **`version:`** ≠ this repo’s Git tag **`v*`**.
 
-Index: [index.yaml](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) · packages on [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases) as **`gghstats-xui-<chart-version>.tgz`**.
+#### Alternative — chart path from a git clone
 
-**From a git clone** (template work only):
+Same values file. Useful before a chart version is on Pages, or while iterating on templates:
 
 ```bash
+git clone https://github.com/hrodrig/gghstats-xui-selfhosted.git
+cd gghstats-xui-selfhosted
+# checkout the branch / tag that has the chart version you want
+
 helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
   -f ~/gghstats-xui-selfhosted-data/values.yaml
 ```
+
+Production installs should prefer the **Helm repository** once the chart version is published.
 
 ### 4. Route the UI (out of chart scope)
 

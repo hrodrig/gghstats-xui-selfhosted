@@ -130,13 +130,15 @@ docker compose --env-file "${GGHSTATS_HOST_DATA}/.env" -f run/docker-compose/min
 
 ## Kubernetes Helm
 
-**Goal:** xui (BFF) on Kubernetes; optional in-cluster gghstats (API-only + PVC). Default = both. UI-only against a remote gghstats: `gghstats.enabled: false` + `xui.env.apiBase` (see [`values.ui-only.example.yaml`](run/kubernetes/examples/values.ui-only.example.yaml)).
+**Goal:** xui (BFF) on Kubernetes; optional in-cluster gghstats (API-only + PVC). Default = both. UI-only: `gghstats.enabled: false` + `xui.env.apiBase` (remote URL or same-cluster ClusterIP — see examples).
 
 **Chart scope:** workloads + ClusterIP only. **Out of scope:** Ingress / IngressRoute, DNS, TLS — you apply those yourself (examples below; keep edited copies outside this repo).
 
 **Naming:** this repository is **`gghstats-xui-selfhosted`**. Chart path **`run/kubernetes/helm/gghstats-xui/`** — chart name **`gghstats-xui`**. Packages + [**`index.yaml`**](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) on GitHub Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases).
 
 **Install** (personal files under **`~/gghstats-xui-selfhosted-data/`** — never in this clone):
+
+Recommended — **Helm repository** (GitHub Pages):
 
 ```bash
 helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
@@ -149,7 +151,16 @@ helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-nam
   -f ~/gghstats-xui-selfhosted-data/values.yaml
 ```
 
-**Route the UI** (separate file, out of chart scope):
+Also supported — **local chart path** from a clone (pre-publish / template iteration):
+
+```bash
+helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
+  -f ~/gghstats-xui-selfhosted-data/values.yaml
+```
+
+**Two-chart layout** (backend from [gghstats-selfhosted](https://github.com/hrodrig/gghstats-selfhosted) + this chart UI-only): see [examples README — Path B](run/kubernetes/examples/README.md#path-b--two-charts-gghstats-api-only--xui-ui-only).
+
+**Route the UI** (separate file, out of chart scope; example includes HTTP→HTTPS redirect):
 
 ```bash
 cp run/kubernetes/examples/traefik-ingressroute.yaml ~/gghstats-xui-selfhosted-data/traefik-ingressroute.yaml
