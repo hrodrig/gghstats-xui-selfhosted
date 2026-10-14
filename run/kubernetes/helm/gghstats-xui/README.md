@@ -9,17 +9,20 @@ Two Deployments on Kubernetes:
 
 The BFF auto-targets the in-cluster backend at `http://<release>-gghstats-xui-backend:8080` (override via `xui.env.apiBase`). The shared API token is set on both containers from a Secret.
 
-## Install from the Helm repository (recommended)
+The chart ships **no Ingress** — only ClusterIP Services. You add routing (see step 4).
 
-After the first chart publish (annotated tag **`v*`** on **`main`** → chart-releaser → **`gh-pages`**), install without cloning:
+## Operator path (Kubernetes)
 
-```bash
-helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
-helm repo update
-helm search repo gghstats-xui -l
-```
+### 1. Prerequisites
 
-**Secrets — prefer `existingSecret` over `value`** (don't put tokens in `--set`):
+- Kubernetes cluster + **Helm 3**
+- An ingress controller (this guide uses **Traefik v3** with `traefik.io/v1alpha1`)
+- DNS for your UI hostname pointing at the Traefik load balancer
+- A [GitHub PAT](https://github.com/hrodrig/gghstats/blob/main/README.md) for traffic sync, and a shared API token (any strong secret both containers will use)
+
+### 2. Namespace and Secrets
+
+Prefer **`existingSecret`** over putting tokens in `--set`:
 
 ```bash
 kubectl create namespace gghstats
@@ -27,19 +30,27 @@ kubectl create secret generic gghstats-xui-github-secret -n gghstats \
   --from-literal=github-token=YOUR_GITHUB_TOKEN
 kubectl create secret generic gghstats-xui-api-secret -n gghstats \
   --from-literal=api-token=YOUR_SHARED_API_TOKEN
+```
+
+### 3. Install the chart
+
+**From the Helm repository (recommended):**
+
+```bash
+helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
+helm repo update
+helm search repo gghstats-xui -l
 
 helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
   --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
   --set apiToken.existingSecret=gghstats-xui-api-secret
 ```
 
-Use **`helm show values gghstats-xui/gghstats-xui`** for defaults. Pin with **`--version`** from **`helm search`** (chart **`version:`**, not the repo tag). If **`helm repo add`** fails, the index may not be live yet — use **from a git clone** below.
+Use **`helm show values gghstats-xui/gghstats-xui`** for defaults. Pin with **`--version`** from **`helm search`** (chart **`version:`**, not the repo Git tag).
 
 Index: [index.yaml](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) · packages on [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases) as **`gghstats-xui-<chart-version>.tgz`**.
 
-## Install from a git clone
-
-From the repository root of [gghstats-xui-selfhosted](https://github.com/hrodrig/gghstats-xui-selfhosted):
+**From a git clone** (if the index is not live yet, or you are editing templates):
 
 ```bash
 helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
@@ -47,7 +58,7 @@ helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --c
   --set apiToken.existingSecret=gghstats-xui-api-secret
 ```
 
-Quick path with inline values (dev only — prefer secrets above):
+Dev-only inline values (avoid in production):
 
 ```bash
 helm install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
@@ -55,9 +66,16 @@ helm install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-name
   --set apiToken.value=YOUR_SHARED_API_TOKEN
 ```
 
-## Routing (Traefik IngressRoute)
+### 4. Route the UI (Traefik IngressRoute example)
 
-The chart ships **no Ingress** — only a `ClusterIP` Service for the UI. Route it yourself. If you run Traefik as your ingress (as in the CBPI stack), apply an `IngressRoute` in the `traefik.io/v1alpha1` group:
+Copy and edit the example manifest, then apply:
+
+```bash
+# Edit: Host(), service name (<release>-gghstats-xui-ui), entryPoints, certResolver
+kubectl apply -f run/kubernetes/examples/traefik-ingressroute.yaml
+```
+
+Example shape (placeholders — full file: [`../../examples/traefik-ingressroute.yaml`](../../examples/traefik-ingressroute.yaml)):
 
 ```yaml
 apiVersion: traefik.io/v1alpha1
@@ -78,13 +96,31 @@ spec:
     certResolver: your-resolver
 ```
 
-Replace `my-xui-gghstats-xui-ui` with your release's UI Service name (`<release>-gghstats-xui-ui`). The exact `entryPoints` / `certResolver` names depend on your Traefik deployment — match them to your cluster.
+- Service name = **`<release>-gghstats-xui-ui`** (release `my-xui` → `my-xui-gghstats-xui-ui`).
+- **`entryPoints`** / **`certResolver`** must match your Traefik deployment.
+- Other ingress (nginx, Gateway API, etc.): point at the same UI Service port **3000**.
 
-> **CRD group trap:** Traefik v3 watches only `traefik.io/v1alpha1`. If the route silently does nothing, verify the resource lives in that group, not `traefik.containo.us/v1alpha1` (`kubectl get ingressroute.traefik.io -n gghstats`).
+> **CRD group trap:** Traefik v3 watches only `traefik.io/v1alpha1`. If the route silently does nothing, check `kubectl get ingressroute.traefik.io -n gghstats` — not `traefik.containo.us`.
 
-**Check:** `kubectl get pods -n gghstats -l app.kubernetes.io/name=gghstats-xui` and your route URL.
+### 5. Verify
 
-**Remove:** `helm uninstall my-xui -n gghstats`
+```bash
+kubectl get pods -n gghstats -l app.kubernetes.io/name=gghstats-xui
+kubectl get svc -n gghstats -l app.kubernetes.io/name=gghstats-xui
+# Then open https://xui.example.com (your host)
+```
+
+### 6. Auth boundary (public hosts)
+
+The BFF allowlists `/api/*` paths and keeps the API token server-side, but it is **not** a login wall. If the hostname is public, put **Cloudflare Access**, reverse-proxy basic auth, or equivalent **in front** of Traefik (or as Traefik middleware).
+
+### 7. Uninstall
+
+```bash
+helm uninstall my-xui -n gghstats
+kubectl delete -f run/kubernetes/examples/traefik-ingressroute.yaml   # if you applied it
+# PVC may remain (helm.sh/resource-policy: keep) — delete manually if you want data gone
+```
 
 ## Configuration
 

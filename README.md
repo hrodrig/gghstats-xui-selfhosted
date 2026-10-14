@@ -5,6 +5,8 @@
 [![xui image on GHCR](https://img.shields.io/badge/image-ghcr.io%2Fhrodrig%2Fgghstats--xui-2496ED?logo=github)](https://github.com/hrodrig/gghstats-xui/pkgs/container/gghstats-xui)
 [![gghstats backend](https://img.shields.io/badge/app-hrodrig%2Fgghstats-181717?logo=github)](https://github.com/hrodrig/gghstats)
 
+![gghstats-xui-selfhosted — Docker, Compose, Helm, run/](assets/gghstats-xui-selfhosted-hero.png)
+
 Deployment manifests for **[gghstats-xui](https://github.com/hrodrig/gghstats-xui)** — the Atlas Day/Night dashboard — running in front of a **[gghstats](https://github.com/hrodrig/gghstats)** instance in **API-only** mode.
 
 **App source and releases:**
@@ -15,6 +17,7 @@ Deployment manifests for **[gghstats-xui](https://github.com/hrodrig/gghstats-xu
 
 ## Table of contents
 
+- [Pick a path](#pick-a-path)
 - [What this runs](#what-this-runs)
 - [Quick start (Compose)](#quick-start-compose)
 - [Docker single container](#docker-single-container)
@@ -25,6 +28,20 @@ Deployment manifests for **[gghstats-xui](https://github.com/hrodrig/gghstats-xu
 - [Versioning](#versioning)
 - [Contributing](#contributing)
 - [License](#license)
+
+---
+
+## Pick a path
+
+| You want… | Section |
+|-----------|---------|
+| **Compose, two containers** (quick VPS / laptop) | [Quick start (Compose)](#quick-start-compose) |
+| **UI only** against an existing gghstats | [Docker single container](#docker-single-container) |
+| **Kubernetes** (Helm + route the UI yourself) | [Kubernetes Helm](#kubernetes-helm) |
+
+Shared Compose env: copy [`run/common/.env.example`](run/common/.env.example) to **`${GGHSTATS_HOST_DATA}/.env`**. Deeper index: [`run/README.md`](run/README.md).
+
+**[↑ Contents](#table-of-contents)**
 
 ---
 
@@ -113,31 +130,32 @@ docker compose --env-file "${GGHSTATS_HOST_DATA}/.env" -f run/docker-compose/min
 
 ## Kubernetes Helm
 
-**Goal:** gghstats (API-only) + xui (BFF) as two Deployments, with a PVC for the backend SQLite and the shared API token in a Secret.
+**Goal:** gghstats (API-only) + xui (BFF) as two Deployments, PVC for backend SQLite, shared API token in a Secret.
 
-The chart ships **no Ingress** — only `ClusterIP` Services. Route the UI yourself (e.g. a Traefik `IngressRoute`). See the [chart README](run/kubernetes/helm/gghstats-xui/README.md) for secrets, Traefik `IngressRoute`, and full options.
+The chart ships **no Ingress** — only `ClusterIP` Services. After install, route the UI (example Traefik `IngressRoute` below).
 
-**Naming:** this repository is **`gghstats-xui-selfhosted`**. The chart lives under **`run/kubernetes/helm/gghstats-xui/`** — chart name **`gghstats-xui`**. Packaged charts and [**`index.yaml`**](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) publish to GitHub Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases) after the first **`v*`** tag on **`main`**.
+**Naming:** this repository is **`gghstats-xui-selfhosted`**. Chart path **`run/kubernetes/helm/gghstats-xui/`** — chart name **`gghstats-xui`**. Packages + [**`index.yaml`**](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) on GitHub Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases).
 
-**Install from the Helm repo (recommended after first chart publish):**
+**Install from the Helm repo:**
 
 ```bash
 helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
 helm repo update
+# Create secrets first — see chart README step 2
 helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
   --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
   --set apiToken.existingSecret=gghstats-xui-api-secret
 ```
 
-If **`helm repo add`** fails, use a clone until **`index.yaml`** is live:
+**Route the UI** (edit placeholders, then apply):
 
 ```bash
-helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
-  --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
-  --set apiToken.existingSecret=gghstats-xui-api-secret
+kubectl apply -f run/kubernetes/examples/traefik-ingressroute.yaml
 ```
 
-**More:** [run/kubernetes/helm/gghstats-xui/README.md](run/kubernetes/helm/gghstats-xui/README.md)
+Example host in the sample is **`xui.example.com`** — replace with yours. Service name = **`<release>-gghstats-xui-ui`**.
+
+**Step-by-step** (prereqs → secrets → helm → IngressRoute → verify → auth → uninstall): [chart README](run/kubernetes/helm/gghstats-xui/README.md) · [examples](run/kubernetes/examples/)
 
 **[↑ Contents](#table-of-contents)**
 
@@ -156,12 +174,15 @@ The `gghstats` container bind-mounts **`${GGHSTATS_HOST_DATA}`** to **`/data`**;
 ## Repository layout
 
 ```text
+assets/
+└── gghstats-xui-selfhosted-hero.png
 run/
 ├── common/.env.example          # Shared vars: gghstats (api-only) + xui (BFF)
 ├── docker/                      # docker run (xui-only BFF)
 ├── docker-compose/
 │   └── minimal/                 # Two-container stack (gghstats + xui)
 └── kubernetes/
+    ├── examples/                # Traefik IngressRoute (beside the chart)
     └── helm/gghstats-xui/       # Helm chart: two Deployments + PVC + Secret
 data/
 └── .keep                        # Repo-root fallback mount target (see .env)

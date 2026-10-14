@@ -1,0 +1,29 @@
+# Example Traefik IngressRoute for the gghstats-xui UI Service.
+#
+# The Helm chart ships ClusterIP only — apply this (or your own Ingress) yourself.
+#
+# Before apply:
+#   1. Replace Host(`xui.example.com`) with your public hostname.
+#   2. Set services[0].name to <release>-gghstats-xui-ui (e.g. my-xui-gghstats-xui-ui).
+#   3. Match entryPoints / certResolver to your Traefik install.
+#
+# Traefik v3 watches traefik.io/v1alpha1 only — not traefik.containo.us/v1alpha1.
+#
+#   kubectl apply -f run/kubernetes/examples/traefik-ingressroute.yaml
+#
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: gghstats-xui
+  namespace: gghstats
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`xui.example.com`)
+      services:
+        - name: my-xui-gghstats-xui-ui
+          port: 3000
+  tls:
+    certResolver: your-resolver

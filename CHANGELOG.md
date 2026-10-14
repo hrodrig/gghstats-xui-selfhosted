@@ -11,6 +11,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - Document **Helm repo** install from GitHub Pages (`helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted`).
 - Harden **Release Charts**: `skip_existing`, bootstrap **`.nojekyll`** on first **`gh-pages`**.
+- **Kubernetes operator path:** step-by-step chart README (secrets → helm → route → verify → auth → uninstall).
+- Example Traefik **`IngressRoute`**: [`run/kubernetes/examples/traefik-ingressroute.yaml`](run/kubernetes/examples/traefik-ingressroute.yaml) (generic `xui.example.com`).
+- Root README **Pick a path** + hero [`assets/gghstats-xui-selfhosted-hero.png`](assets/gghstats-xui-selfhosted-hero.png); gitignore allowlist for **`assets/`**.
 
 ## [0.1.0] - 2026-10-12
 
