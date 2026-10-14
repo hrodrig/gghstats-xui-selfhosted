@@ -2,21 +2,31 @@
 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/hrodrig/gghstats-xui-selfhosted/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Live demo](https://img.shields.io/badge/demo-xui.hermesrodriguez.com-0d7377)](https://xui.hermesrodriguez.com/)
 [![xui image on GHCR](https://img.shields.io/badge/image-ghcr.io%2Fhrodrig%2Fgghstats--xui-2496ED?logo=github)](https://github.com/hrodrig/gghstats-xui/pkgs/container/gghstats-xui)
 [![gghstats backend](https://img.shields.io/badge/app-hrodrig%2Fgghstats-181717?logo=github)](https://github.com/hrodrig/gghstats)
 
 ![gghstats-xui-selfhosted — Docker, Compose, Helm, run/](assets/gghstats-xui-selfhosted-hero.png)
 
-Deployment manifests for **[gghstats-xui](https://github.com/hrodrig/gghstats-xui)** — the Atlas Day/Night dashboard — running in front of a **[gghstats](https://github.com/hrodrig/gghstats)** instance in **API-only** mode.
+**[Live demo → xui.hermesrodriguez.com](https://xui.hermesrodriguez.com/)**
+
+Deployment manifests for **[gghstats-xui](https://github.com/hrodrig/gghstats-xui)** — one reference frontend (Atlas Day/Night) in front of **[gghstats](https://github.com/hrodrig/gghstats)** in **API-only** mode.
+
+### Why this exists
+
+**gghstats** already serves JSON when `GGHSTATS_API_ONLY=true`. **gghstats-xui** is a working proof that **anyone can build their own UI** (Svelte, React, Go templates, …) and consume that API — token stays on a BFF/proxy, never in the browser.
+
+This repo ships the **operator path** (Compose / Docker / Helm) so you can run that reference skin — or swap in **your** frontend against the same api-only backend. The goal: **more interfaces to gghstats**, not one branded dashboard forever.
 
 **App source and releases:**
-- Dashboard (BFF): [github.com/hrodrig/gghstats-xui](https://github.com/hrodrig/gghstats-xui)
+- Dashboard (BFF) reference: [github.com/hrodrig/gghstats-xui](https://github.com/hrodrig/gghstats-xui)
 - Backend (API): [github.com/hrodrig/gghstats](https://github.com/hrodrig/gghstats)
 
 ---
 
 ## Table of contents
 
+- [Why this exists](#why-this-exists)
 - [Pick a path](#pick-a-path)
 - [What this runs](#what-this-runs)
 - [Quick start (Compose)](#quick-start-compose)
