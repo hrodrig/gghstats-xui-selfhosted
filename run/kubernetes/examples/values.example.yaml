@@ -1,0 +1,26 @@
+# Example Helm values — in-cluster gghstats (API-only) + xui BFF.
+#
+# UI-only against an external gghstats: see values.ui-only.example.yaml
+#
+#   mkdir -p ~/gghstats-xui-selfhosted-data
+#   cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-selfhosted-data/values.yaml
+#   helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats \
+#     -f ~/gghstats-xui-selfhosted-data/values.yaml
+#
+# Out of scope: Ingress / IngressRoute / DNS / TLS — see traefik-ingressroute.yaml.
+
+gghstats:
+  enabled: true
+  githubToken:
+    existingSecret: gghstats-xui-github-secret
+  # image:
+  #   tag: "v1.6.6"
+  # env:
+  #   filter: "owner/repo,owner/other"
+
+apiToken:
+  existingSecret: gghstats-xui-api-secret
+
+# xui:
+#   image:
+#     tag: "v0.1.3"

@@ -1,20 +1,33 @@
 # gghstats-xui-selfhosted
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/hrodrig/gghstats-xui-selfhosted/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/hrodrig/gghstats-xui-selfhosted/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Live demo](https://img.shields.io/badge/demo-xui.hermesrodriguez.com-0d7377)](https://xui.hermesrodriguez.com/)
 [![xui image on GHCR](https://img.shields.io/badge/image-ghcr.io%2Fhrodrig%2Fgghstats--xui-2496ED?logo=github)](https://github.com/hrodrig/gghstats-xui/pkgs/container/gghstats-xui)
 [![gghstats backend](https://img.shields.io/badge/app-hrodrig%2Fgghstats-181717?logo=github)](https://github.com/hrodrig/gghstats)
 
-Deployment manifests for **[gghstats-xui](https://github.com/hrodrig/gghstats-xui)** — the Atlas Day/Night dashboard — running in front of a **[gghstats](https://github.com/hrodrig/gghstats)** instance in **API-only** mode.
+![gghstats-xui-selfhosted — Docker, Compose, Helm, run/](assets/gghstats-xui-selfhosted-hero.png)
+
+**[Live demo → xui.hermesrodriguez.com](https://xui.hermesrodriguez.com/)**
+
+Deployment manifests for **[gghstats-xui](https://github.com/hrodrig/gghstats-xui)** — one reference frontend (Atlas Day/Night) in front of **[gghstats](https://github.com/hrodrig/gghstats)** in **API-only** mode.
+
+### Why this exists
+
+**gghstats** already serves JSON when `GGHSTATS_API_ONLY=true`. **gghstats-xui** is a working proof that **anyone can build their own UI** (Svelte, React, Go templates, …) and consume that API — token stays on a BFF/proxy, never in the browser.
+
+This repo ships the **operator path** (Compose / Docker / Helm) so you can run that reference skin — or swap in **your** frontend against the same api-only backend. The goal: **more interfaces to gghstats**, not one branded dashboard forever.
 
 **App source and releases:**
-- Dashboard (BFF): [github.com/hrodrig/gghstats-xui](https://github.com/hrodrig/gghstats-xui)
+- Dashboard (BFF) reference: [github.com/hrodrig/gghstats-xui](https://github.com/hrodrig/gghstats-xui)
 - Backend (API): [github.com/hrodrig/gghstats](https://github.com/hrodrig/gghstats)
 
 ---
 
 ## Table of contents
 
+- [Why this exists](#why-this-exists)
+- [Pick a path](#pick-a-path)
 - [What this runs](#what-this-runs)
 - [Quick start (Compose)](#quick-start-compose)
 - [Docker single container](#docker-single-container)
@@ -28,6 +41,20 @@ Deployment manifests for **[gghstats-xui](https://github.com/hrodrig/gghstats-xu
 
 ---
 
+## Pick a path
+
+| You want… | Section |
+|-----------|---------|
+| **Compose, two containers** (quick VPS / laptop) | [Quick start (Compose)](#quick-start-compose) |
+| **UI only** against an existing gghstats | [Docker single container](#docker-single-container) |
+| **Kubernetes** (Helm + route the UI yourself) | [Kubernetes Helm](#kubernetes-helm) |
+
+Shared Compose env: copy [`run/common/.env.example`](run/common/.env.example) to **`${GGHSTATS_HOST_DATA}/.env`**. Deeper index: [`run/README.md`](run/README.md).
+
+**[↑ Contents](#table-of-contents)**
+
+---
+
 ## What this runs
 
 Two containers on an internal Docker network:
@@ -35,7 +62,7 @@ Two containers on an internal Docker network:
 | Container | Image | Role | Exposed |
 |-----------|-------|------|---------|
 | `gghstats` | `ghcr.io/hrodrig/gghstats:v1.6.6` | GitHub traffic backend, **API-only** (`GGHSTATS_API_ONLY=true`), SQLite in `/data` | ❌ internal only |
-| `xui` | `ghcr.io/hrodrig/gghstats-xui:v0.1.0` | BFF + dashboard. Proxies `/api/*` → `http://gghstats:8080`, adds `x-api-token` | ✅ host port `3000` |
+| `xui` | `ghcr.io/hrodrig/gghstats-xui:v0.1.3` | BFF + dashboard. Proxies `/api/*` → `http://gghstats:8080`, adds `x-api-token` | ✅ host port `3000` |
 
 The **API token never reaches the browser** — it lives in both containers (`GGHSTATS_API_TOKEN`) and the xui BFF attaches it server-side on every proxied request.
 
@@ -79,7 +106,7 @@ docker run -d \
   -e GGHSTATS_API_TOKEN=your-shared-token \
   -p 3000:3000 \
   --name gghstats-xui \
-  ghcr.io/hrodrig/gghstats-xui:v0.1.0
+  ghcr.io/hrodrig/gghstats-xui:v0.1.3
 ```
 
 `GGHSTATS_API_BASE` points at a gghstats `serve` instance; for API-only, that backend runs with `GGHSTATS_API_ONLY=true`, but a full dashboard backend also works — the xui only calls `/api/*` routes.
@@ -113,31 +140,45 @@ docker compose --env-file "${GGHSTATS_HOST_DATA}/.env" -f run/docker-compose/min
 
 ## Kubernetes Helm
 
-**Goal:** gghstats (API-only) + xui (BFF) as two Deployments, with a PVC for the backend SQLite and the shared API token in a Secret.
+**Goal:** xui (BFF) on Kubernetes; optional in-cluster gghstats (API-only + PVC). Default = both. UI-only: `gghstats.enabled: false` + `xui.env.apiBase` (remote URL or same-cluster ClusterIP — see examples).
 
-The chart ships **no Ingress** — only `ClusterIP` Services. Route the UI yourself (e.g. a Traefik `IngressRoute`). See the [chart README](run/kubernetes/helm/gghstats-xui/README.md) for secrets, Traefik `IngressRoute`, and full options.
+**Chart scope:** workloads + ClusterIP only. **Out of scope:** Ingress / IngressRoute, DNS, TLS — you apply those yourself (examples below; keep edited copies outside this repo).
 
-**Naming:** this repository is **`gghstats-xui-selfhosted`**. The chart lives under **`run/kubernetes/helm/gghstats-xui/`** — chart name **`gghstats-xui`**. Packaged charts and [**`index.yaml`**](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) publish to GitHub Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases) after the first **`v*`** tag on **`main`**.
+**Naming:** this repository is **`gghstats-xui-selfhosted`**. Chart path **`run/kubernetes/helm/gghstats-xui/`** — chart name **`gghstats-xui`**. Packages + [**`index.yaml`**](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) on GitHub Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases).
 
-**Install from the Helm repo (recommended after first chart publish):**
+**Install** (personal files under **`~/gghstats-xui-selfhosted-data/`** — never in this clone):
+
+Recommended — **Helm repository** (GitHub Pages):
 
 ```bash
 helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
 helm repo update
+# Secrets first — chart README step 2
+mkdir -p ~/gghstats-xui-selfhosted-data
+cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-selfhosted-data/values.yaml
+# edit ~/gghstats-xui-selfhosted-data/values.yaml
 helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
-  --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
-  --set apiToken.existingSecret=gghstats-xui-api-secret
+  -f ~/gghstats-xui-selfhosted-data/values.yaml
 ```
 
-If **`helm repo add`** fails, use a clone until **`index.yaml`** is live:
+Also supported — **local chart path** from a clone (pre-publish / template iteration):
 
 ```bash
 helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
-  --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
-  --set apiToken.existingSecret=gghstats-xui-api-secret
+  -f ~/gghstats-xui-selfhosted-data/values.yaml
 ```
 
-**More:** [run/kubernetes/helm/gghstats-xui/README.md](run/kubernetes/helm/gghstats-xui/README.md)
+**Two-chart layout** (backend from [gghstats-selfhosted](https://github.com/hrodrig/gghstats-selfhosted) + this chart UI-only): see [examples README — Path B](run/kubernetes/examples/README.md#path-b--two-charts-gghstats-api-only--xui-ui-only).
+
+**Route the UI** (separate file, out of chart scope; example includes HTTP→HTTPS redirect):
+
+```bash
+cp run/kubernetes/examples/traefik-ingressroute.yaml ~/gghstats-xui-selfhosted-data/traefik-ingressroute.yaml
+# edit Host(`xui.example.com`), service <release>-gghstats-xui-ui, certResolver
+kubectl apply -f ~/gghstats-xui-selfhosted-data/traefik-ingressroute.yaml
+```
+
+**Step-by-step:** [chart README](run/kubernetes/helm/gghstats-xui/README.md) · [examples](run/kubernetes/examples/)
 
 **[↑ Contents](#table-of-contents)**
 
@@ -156,12 +197,15 @@ The `gghstats` container bind-mounts **`${GGHSTATS_HOST_DATA}`** to **`/data`**;
 ## Repository layout
 
 ```text
+assets/
+└── gghstats-xui-selfhosted-hero.png
 run/
 ├── common/.env.example          # Shared vars: gghstats (api-only) + xui (BFF)
 ├── docker/                      # docker run (xui-only BFF)
 ├── docker-compose/
 │   └── minimal/                 # Two-container stack (gghstats + xui)
 └── kubernetes/
+    ├── examples/                # Traefik IngressRoute (beside the chart)
     └── helm/gghstats-xui/       # Helm chart: two Deployments + PVC + Secret
 data/
 └── .keep                        # Repo-root fallback mount target (see .env)
@@ -175,7 +219,7 @@ data/
 
 - **[`VERSION`](VERSION)** — semver of **this repository** (manifests, docs, `run/`). On **`main`**, tag with **`v<semver>`**.
 - **`GGHSTATS_VERSION`** in **`${GGHSTATS_HOST_DATA}/.env`** — the upstream **gghstats** backend image tag on GHCR (e.g. `v1.6.6`).
-- **`GGHSTATS_XUI_VERSION`** in **`${GGHSTATS_HOST_DATA}/.env`** — the **gghstats-xui** dashboard image tag on GHCR (e.g. `v0.1.0`).
+- **`GGHSTATS_XUI_VERSION`** in **`${GGHSTATS_HOST_DATA}/.env`** — the **gghstats-xui** dashboard image tag on GHCR (e.g. `v0.1.3`).
 
 Three independent numbers. Upgrade the dashboard or backend by editing the matching env var, then **pull + `up -d`** (not `restart` alone, which does not swap images).
 

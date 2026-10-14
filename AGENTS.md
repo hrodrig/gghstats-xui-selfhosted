@@ -16,7 +16,7 @@
 |------|---------|
 | Root **`VERSION`** + README badge + Git tag **`v*`** | Snapshot of **this** repo (manifests/docs). Semver **without** `v` in the file. |
 | **`Chart.yaml` `version:`** | Helm **package** semver. Bump **only** when `run/kubernetes/helm/gghstats-xui/` should publish a new chart. May lag repo `VERSION`. |
-| **`GGHSTATS_XUI_VERSION` / ui `image.tag` / `Chart.yaml` `appVersion`** | **gghstats-xui** image on GHCR (`ghcr.io/hrodrig/gghstats-xui:v0.1.0`). Align with a **published** [gghstats-xui](https://github.com/hrodrig/gghstats-xui/releases) tag (`v` prefix in env/image; `appVersion` often without `v`). |
+| **`GGHSTATS_XUI_VERSION` / ui `image.tag` / `Chart.yaml` `appVersion`** | **gghstats-xui** image on GHCR (`ghcr.io/hrodrig/gghstats-xui:v0.1.3`). Align with a **published** [gghstats-xui](https://github.com/hrodrig/gghstats-xui/releases) tag (`v` prefix in env/image; `appVersion` often without `v`). |
 | **`GGHSTATS_VERSION` / backend `image.tag`** | **gghstats** backend image on GHCR. Independent of this repo’s `VERSION`. |
 
 ## Pins after app releases

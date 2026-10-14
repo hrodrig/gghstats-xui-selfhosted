@@ -2,8 +2,11 @@ fullnameOverride: ""
 
 # -----------------------------------------------------------------------------
 # gghstats backend (API-only). Not exposed outside the cluster.
+# Set enabled: false to skip this Deployment/Service/PVC and point the BFF at an
+# external gghstats with xui.env.apiBase (required when enabled is false).
 # -----------------------------------------------------------------------------
 gghstats:
+  enabled: true
   replicaCount: 1
 
   image:
@@ -70,7 +73,7 @@ xui:
 
   image:
     repository: ghcr.io/hrodrig/gghstats-xui
-    tag: "v0.1.0"
+    tag: "v0.1.3"
     pullPolicy: IfNotPresent
 
   service:
@@ -80,9 +83,9 @@ xui:
     targetPort: 3000
 
   env:
-    # Leave empty → the BFF auto-targets the in-cluster backend at
-    # http://<release>-gghstats-xui-backend:8080. Set an absolute URL to point
-    # at an external gghstats instead (then the backend Deployment above is optional).
+    # Leave empty → BFF auto-targets in-cluster backend
+    # (http://<release>-gghstats-xui-backend:8080). Required when
+    # gghstats.enabled is false (external gghstats on another host/VPS/network).
     apiBase: ""
     port: "3000"
 

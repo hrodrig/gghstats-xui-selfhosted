@@ -7,10 +7,21 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-14
+
 ### Added
 
 - Document **Helm repo** install from GitHub Pages (`helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted`).
 - Harden **Release Charts**: `skip_existing`, bootstrap **`.nojekyll`** on first **`gh-pages`**.
+- **Kubernetes operator path:** step-by-step chart README (secrets → helm → route → verify → auth → uninstall).
+- Document **Ingress / IngressRoute as out of chart scope**; examples to copy into **`~/gghstats-xui-selfhosted-data/`**: [`values.example.yaml`](run/kubernetes/examples/values.example.yaml) + [`traefik-ingressroute.yaml`](run/kubernetes/examples/traefik-ingressroute.yaml) (generic `xui.example.com`).
+- Root README **Pick a path** + hero [`assets/gghstats-xui-selfhosted-hero.png`](assets/gghstats-xui-selfhosted-hero.png); gitignore allowlist for **`assets/`**.
+- **Helm chart `0.2.0`:** optional in-cluster gghstats — `gghstats.enabled` (default `true`). When `false`, require `xui.env.apiBase` (external API); skip backend Deployment/Service/PVC/GitHub Secret. Example: [`values.ui-only.example.yaml`](run/kubernetes/examples/values.ui-only.example.yaml).
+- Live demo + api-only frontend mission in root README.
+
+### Changed
+
+- Default **gghstats-xui** image pin **`v0.1.3`** (`GGHSTATS_XUI_VERSION`, Helm `xui.image.tag`, Compose, docs). Chart `appVersion` **0.1.3**.
 
 ## [0.1.0] - 2026-10-12
 
@@ -23,5 +34,6 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - **`docker run`** docs for running the xui BFF alone against an external gghstats.
 - Root README, run/README, per-stack READMEs, `VERSION`, `data/.keep`, and `.gitignore` (deny-all with allowlist).
 
-[Unreleased]: https://github.com/hrodrig/gghstats-xui-selfhosted/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/hrodrig/gghstats-xui-selfhosted/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/hrodrig/gghstats-xui-selfhosted/releases/tag/v0.2.0
 [0.1.0]: https://github.com/hrodrig/gghstats-xui-selfhosted/releases/tag/v0.1.0

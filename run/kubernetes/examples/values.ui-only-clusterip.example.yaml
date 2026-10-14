@@ -1,0 +1,24 @@
+# UI-only → gghstats in the **same cluster** from chart gghstats/gghstats
+# (gghstats-selfhosted Helm repo), not the optional backend in this chart.
+#
+# Pattern:
+#   1. helm upgrade --install gghstats-api gghstats/gghstats … -f values-api.yaml
+#      Service becomes: gghstats-api-gghstats:8080  (<release>-gghstats)
+#   2. This file for gghstats-xui (gghstats.enabled: false).
+#
+# Shared Secret key api-token must match both releases.
+#
+#   cp run/kubernetes/examples/values.ui-only-clusterip.example.yaml \
+#     ~/gghstats-xui-selfhosted-data/values.yaml
+
+gghstats:
+  enabled: false
+
+apiToken:
+  existingSecret: gghstats-xui-api-secret
+
+xui:
+  # image:
+  #   tag: "v0.1.1"
+  env:
+    apiBase: "http://gghstats-api-gghstats:8080"

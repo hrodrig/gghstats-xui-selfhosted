@@ -66,3 +66,11 @@ jobs:
             --set gghstats.githubToken.existingSecret=my-github-secret \
             --set apiToken.existingSecret=my-api-secret | \
             kubeconform -strict -kubernetes-version "${KUBERNETES_VERSION}" -summary -
+
+      - name: helm template + kubeconform (UI-only, external gghstats)
+        run: |
+          helm template test-rel "$CHART_DIR" --namespace test-ns \
+            --set gghstats.enabled=false \
+            --set xui.env.apiBase=https://gghstats.example.com \
+            --set apiToken.existingSecret=my-api-secret | \
+            kubeconform -strict -kubernetes-version "${KUBERNETES_VERSION}" -summary -

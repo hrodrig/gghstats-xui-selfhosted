@@ -1,3 +1,8 @@
+{{- if not .Values.gghstats.enabled }}
+{{- if not .Values.xui.env.apiBase }}
+{{- fail "gghstats.enabled=false requires xui.env.apiBase (absolute URL of an external gghstats API)" }}
+{{- end }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

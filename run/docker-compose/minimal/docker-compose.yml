@@ -57,7 +57,7 @@ services:
     logging: *default-logging
 
   xui:
-    image: ghcr.io/hrodrig/gghstats-xui:${GGHSTATS_XUI_VERSION:-v0.1.0}
+    image: ghcr.io/hrodrig/gghstats-xui:${GGHSTATS_XUI_VERSION:-v0.1.3}
     container_name: gghstats-xui
     restart: unless-stopped
     security_opt:
