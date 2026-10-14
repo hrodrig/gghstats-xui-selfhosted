@@ -1,0 +1,23 @@
+# Example Helm values for gghstats-xui — chart scope only.
+#
+# Copy outside the clone (e.g. ~/gghstats-xui-values.yaml), edit, then:
+#   helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats \
+#     -f ~/gghstats-xui-values.yaml
+#
+# Out of scope for this file and for the chart: Ingress / IngressRoute / DNS / TLS.
+# Route the UI with a separate manifest — see traefik-ingressroute.yaml (copy + edit).
+
+gghstats:
+  githubToken:
+    existingSecret: gghstats-xui-github-secret
+  # image:
+  #   tag: "v1.6.6"
+  # env:
+  #   filter: "owner/repo,owner/other"
+
+apiToken:
+  existingSecret: gghstats-xui-api-secret
+
+# xui:
+#   image:
+#     tag: "v0.1.0"

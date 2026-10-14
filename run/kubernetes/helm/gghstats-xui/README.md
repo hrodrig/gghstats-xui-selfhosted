@@ -9,16 +9,22 @@ Two Deployments on Kubernetes:
 
 The BFF auto-targets the in-cluster backend at `http://<release>-gghstats-xui-backend:8080` (override via `xui.env.apiBase`). The shared API token is set on both containers from a Secret.
 
-The chart ships **no Ingress** — only ClusterIP Services. You add routing (see step 4).
+### Chart scope (what Helm installs)
+
+Deployments, ClusterIP Services, PVC, Secret wiring, image/env values.
+
+### Out of scope (not in the chart)
+
+**Ingress / IngressRoute**, DNS, TLS, cert resolvers, and the auth front door. Keep those in your own files (outside this repo). Clear Traefik example: [`../../examples/traefik-ingressroute.yaml`](../../examples/traefik-ingressroute.yaml).
 
 ## Operator path (Kubernetes)
 
 ### 1. Prerequisites
 
 - Kubernetes cluster + **Helm 3**
-- An ingress controller (this guide uses **Traefik v3** with `traefik.io/v1alpha1`)
-- DNS for your UI hostname pointing at the Traefik load balancer
-- A [GitHub PAT](https://github.com/hrodrig/gghstats/blob/main/README.md) for traffic sync, and a shared API token (any strong secret both containers will use)
+- An ingress controller if the UI is public (this guide’s example uses **Traefik v3** / `traefik.io/v1alpha1`) — **you** configure it; the chart does not
+- DNS for your UI hostname → Traefik load balancer (your ops, not this chart)
+- A [GitHub PAT](https://github.com/hrodrig/gghstats/blob/main/README.md) for traffic sync, and a shared API token
 
 ### 2. Namespace and Secrets
 
@@ -32,47 +38,40 @@ kubectl create secret generic gghstats-xui-api-secret -n gghstats \
   --from-literal=api-token=YOUR_SHARED_API_TOKEN
 ```
 
-### 3. Install the chart
+### 3. Install the chart (local values file)
 
-**From the Helm repository (recommended):**
+Copy the example values **outside the clone**, edit, install. Day-to-day: no edits to this repository.
 
 ```bash
 helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
 helm repo update
-helm search repo gghstats-xui -l
+
+cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-values.yaml
+# edit ~/gghstats-xui-values.yaml — secrets refs, optional image tags
 
 helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
-  --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
-  --set apiToken.existingSecret=gghstats-xui-api-secret
+  -f ~/gghstats-xui-values.yaml
 ```
 
 Use **`helm show values gghstats-xui/gghstats-xui`** for defaults. Pin with **`--version`** from **`helm search`** (chart **`version:`**, not the repo Git tag).
 
 Index: [index.yaml](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) · packages on [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases) as **`gghstats-xui-<chart-version>.tgz`**.
 
-**From a git clone** (if the index is not live yet, or you are editing templates):
+**From a git clone** (template work only):
 
 ```bash
 helm upgrade --install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
-  --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
-  --set apiToken.existingSecret=gghstats-xui-api-secret
+  -f ~/gghstats-xui-values.yaml
 ```
 
-Dev-only inline values (avoid in production):
+### 4. Route the UI (out of chart scope)
+
+Copy the example IngressRoute **outside the clone**, set your host / service name / `certResolver`, apply:
 
 ```bash
-helm install my-xui ./run/kubernetes/helm/gghstats-xui -n gghstats --create-namespace \
-  --set gghstats.githubToken.value=YOUR_GITHUB_TOKEN \
-  --set apiToken.value=YOUR_SHARED_API_TOKEN
-```
-
-### 4. Route the UI (Traefik IngressRoute example)
-
-Copy and edit the example manifest, then apply:
-
-```bash
-# Edit: Host(), service name (<release>-gghstats-xui-ui), entryPoints, certResolver
-kubectl apply -f run/kubernetes/examples/traefik-ingressroute.yaml
+cp run/kubernetes/examples/traefik-ingressroute.yaml ~/gghstats-xui-ingressroute.yaml
+# edit: Host(`xui.example.com`), my-xui-gghstats-xui-ui, entryPoints, certResolver
+kubectl apply -f ~/gghstats-xui-ingressroute.yaml
 ```
 
 Example shape (placeholders — full file: [`../../examples/traefik-ingressroute.yaml`](../../examples/traefik-ingressroute.yaml)):
@@ -118,7 +117,7 @@ The BFF allowlists `/api/*` paths and keeps the API token server-side, but it is
 
 ```bash
 helm uninstall my-xui -n gghstats
-kubectl delete -f run/kubernetes/examples/traefik-ingressroute.yaml   # if you applied it
+kubectl delete -f ~/gghstats-xui-ingressroute.yaml   # if you applied a local copy
 # PVC may remain (helm.sh/resource-policy: keep) — delete manually if you want data gone
 ```
 

@@ -1,6 +1,8 @@
 # Example Traefik IngressRoute for the gghstats-xui UI Service.
 #
-# The Helm chart ships ClusterIP only — apply this (or your own Ingress) yourself.
+# OUT OF SCOPE for the Helm chart: Ingress / IngressRoute / DNS / TLS / cert-manager.
+# The chart only exposes ClusterIP. Keep your edited copy outside the git clone
+# (e.g. ~/gghstats-xui-ingressroute.yaml) so you never commit site-specific hosts.
 #
 # Before apply:
 #   1. Replace Host(`xui.example.com`) with your public hostname.
@@ -9,7 +11,9 @@
 #
 # Traefik v3 watches traefik.io/v1alpha1 only — not traefik.containo.us/v1alpha1.
 #
-#   kubectl apply -f run/kubernetes/examples/traefik-ingressroute.yaml
+#   cp run/kubernetes/examples/traefik-ingressroute.yaml ~/gghstats-xui-ingressroute.yaml
+#   # edit ~/gghstats-xui-ingressroute.yaml
+#   kubectl apply -f ~/gghstats-xui-ingressroute.yaml
 #
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute

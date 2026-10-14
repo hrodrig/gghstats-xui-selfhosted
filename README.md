@@ -132,30 +132,31 @@ docker compose --env-file "${GGHSTATS_HOST_DATA}/.env" -f run/docker-compose/min
 
 **Goal:** gghstats (API-only) + xui (BFF) as two Deployments, PVC for backend SQLite, shared API token in a Secret.
 
-The chart ships **no Ingress** — only `ClusterIP` Services. After install, route the UI (example Traefik `IngressRoute` below).
+**Chart scope:** workloads + ClusterIP only. **Out of scope:** Ingress / IngressRoute, DNS, TLS — you apply those yourself (examples below; keep edited copies outside this repo).
 
 **Naming:** this repository is **`gghstats-xui-selfhosted`**. Chart path **`run/kubernetes/helm/gghstats-xui/`** — chart name **`gghstats-xui`**. Packages + [**`index.yaml`**](https://hrodrig.github.io/gghstats-xui-selfhosted/index.yaml) on GitHub Pages / [Releases](https://github.com/hrodrig/gghstats-xui-selfhosted/releases).
 
-**Install from the Helm repo:**
+**Install** (local values — do not commit site hosts here):
 
 ```bash
 helm repo add gghstats-xui https://hrodrig.github.io/gghstats-xui-selfhosted
 helm repo update
-# Create secrets first — see chart README step 2
+# Secrets first — chart README step 2
+cp run/kubernetes/examples/values.example.yaml ~/gghstats-xui-values.yaml
+# edit ~/gghstats-xui-values.yaml
 helm upgrade --install my-xui gghstats-xui/gghstats-xui -n gghstats --create-namespace \
-  --set gghstats.githubToken.existingSecret=gghstats-xui-github-secret \
-  --set apiToken.existingSecret=gghstats-xui-api-secret
+  -f ~/gghstats-xui-values.yaml
 ```
 
-**Route the UI** (edit placeholders, then apply):
+**Route the UI** (separate file, out of chart scope):
 
 ```bash
-kubectl apply -f run/kubernetes/examples/traefik-ingressroute.yaml
+cp run/kubernetes/examples/traefik-ingressroute.yaml ~/gghstats-xui-ingressroute.yaml
+# edit Host(`xui.example.com`), service <release>-gghstats-xui-ui, certResolver
+kubectl apply -f ~/gghstats-xui-ingressroute.yaml
 ```
 
-Example host in the sample is **`xui.example.com`** — replace with yours. Service name = **`<release>-gghstats-xui-ui`**.
-
-**Step-by-step** (prereqs → secrets → helm → IngressRoute → verify → auth → uninstall): [chart README](run/kubernetes/helm/gghstats-xui/README.md) · [examples](run/kubernetes/examples/)
+**Step-by-step:** [chart README](run/kubernetes/helm/gghstats-xui/README.md) · [examples](run/kubernetes/examples/)
 
 **[↑ Contents](#table-of-contents)**
 
