@@ -1,17 +1,22 @@
 # gghstats-xui (Helm chart)
 
-Two Deployments on Kubernetes:
-
 | Resource | Image | Role | Exposed |
 |----------|-------|------|---------|
-| `…-backend` | `ghcr.io/hrodrig/gghstats:v1.6.6` | gghstats in API-only mode, SQLite on a PVC | ClusterIP only |
+| `…-backend` | `ghcr.io/hrodrig/gghstats:v1.6.6` | gghstats API-only + SQLite PVC | ClusterIP only (**optional**) |
 | `…-ui` | `ghcr.io/hrodrig/gghstats-xui:v0.1.0` | BFF dashboard | ClusterIP (route it yourself) |
 
-The BFF auto-targets the in-cluster backend at `http://<release>-gghstats-xui-backend:8080` (override via `xui.env.apiBase`). The shared API token is set on both containers from a Secret.
+**Modes:**
+
+| Mode | Values | Secrets |
+|------|--------|---------|
+| **In-cluster backend** (default) | `gghstats.enabled: true` | GitHub PAT **and** shared API token |
+| **UI-only** → external gghstats (other VPS / network) | `gghstats.enabled: false` + `xui.env.apiBase` | Shared API token **only** (must match remote gghstats) |
+
+Default: BFF targets `http://<release>-gghstats-xui-backend:8080`. Example UI-only values: [`../../examples/values.ui-only.example.yaml`](../../examples/values.ui-only.example.yaml).
 
 ### Chart scope (what Helm installs)
 
-Deployments, ClusterIP Services, PVC, Secret wiring, image/env values.
+UI Deployment always. Backend Deployment / Service / PVC / GitHub Secret wiring only when **`gghstats.enabled`**. Image/env values.
 
 ### Out of scope (not in the chart)
 
@@ -24,11 +29,13 @@ Deployments, ClusterIP Services, PVC, Secret wiring, image/env values.
 - Kubernetes cluster + **Helm 3**
 - An ingress controller if the UI is public (this guide’s example uses **Traefik v3** / `traefik.io/v1alpha1`) — **you** configure it; the chart does not
 - DNS for your UI hostname → Traefik load balancer (your ops, not this chart)
-- A [GitHub PAT](https://github.com/hrodrig/gghstats/blob/main/README.md) for traffic sync, and a shared API token
+- Shared API token (always). [GitHub PAT](https://github.com/hrodrig/gghstats/blob/main/README.md) only if **`gghstats.enabled: true`**
 
 ### 2. Namespace and Secrets
 
-Prefer **`existingSecret`** over putting tokens in `--set`:
+Prefer **`existingSecret`** over putting tokens in `--set`.
+
+**In-cluster backend** (default — needs PAT for the chart’s gghstats):
 
 ```bash
 kubectl create namespace gghstats
@@ -36,6 +43,13 @@ kubectl create secret generic gghstats-xui-github-secret -n gghstats \
   --from-literal=github-token=YOUR_GITHUB_TOKEN
 kubectl create secret generic gghstats-xui-api-secret -n gghstats \
   --from-literal=api-token=YOUR_SHARED_API_TOKEN
+```
+
+**UI-only** (external gghstats already has its own PAT elsewhere — skip the GitHub secret here):
+
+```bash
+kubectl create secret generic gghstats-xui-api-secret -n gghstats \
+  --from-literal=api-token=SAME_TOKEN_AS_REMOTE_GGHSTATS
 ```
 
 ### 3. Install the chart (personal data directory)
@@ -126,9 +140,10 @@ kubectl delete -f ~/gghstats-xui-selfhosted-data/traefik-ingressroute.yaml   # i
 
 | Key | Default | Purpose |
 |-----|---------|---------|
+| `gghstats.enabled` | `true` | Deploy in-cluster gghstats; `false` = UI-only + require `xui.env.apiBase` |
 | `gghstats.image.tag` | `v1.6.6` | Backend gghstats image |
 | `xui.image.tag` | `v0.1.0` | Dashboard image |
-| `gghstats.env.apiOnly` | `"true"` | API-only mode (leave `true`) |
+| `gghstats.env.apiOnly` | `"true"` | API-only mode (leave `true` when backend enabled) |
 | `gghstats.env.filter` | `"*"` | Repo filter for sync |
-| `xui.env.apiBase` | `""` | Override backend URL (empty = in-cluster auto) |
+| `xui.env.apiBase` | `""` | External gghstats URL (required if `gghstats.enabled=false`) |
 | `gghstats.persistence.*` | 5Gi / RWO | Backend SQLite PVC (`helm.sh/resource-policy: keep`) |

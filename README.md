@@ -130,7 +130,7 @@ docker compose --env-file "${GGHSTATS_HOST_DATA}/.env" -f run/docker-compose/min
 
 ## Kubernetes Helm
 
-**Goal:** gghstats (API-only) + xui (BFF) as two Deployments, PVC for backend SQLite, shared API token in a Secret.
+**Goal:** xui (BFF) on Kubernetes; optional in-cluster gghstats (API-only + PVC). Default = both. UI-only against a remote gghstats: `gghstats.enabled: false` + `xui.env.apiBase` (see [`values.ui-only.example.yaml`](run/kubernetes/examples/values.ui-only.example.yaml)).
 
 **Chart scope:** workloads + ClusterIP only. **Out of scope:** Ingress / IngressRoute, DNS, TLS — you apply those yourself (examples below; keep edited copies outside this repo).
 

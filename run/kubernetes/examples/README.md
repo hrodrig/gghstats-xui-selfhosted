@@ -15,7 +15,8 @@ Copy examples into a **personal data directory** outside the clone — recommend
 
 | File | Purpose |
 |------|---------|
-| [`values.example.yaml`](values.example.yaml) | Helm values only — secrets refs / optional image pins |
+| [`values.example.yaml`](values.example.yaml) | In-cluster gghstats + xui (`gghstats.enabled: true`) |
+| [`values.ui-only.example.yaml`](values.ui-only.example.yaml) | UI only → external gghstats (`enabled: false` + `apiBase`) |
 | [`traefik-ingressroute.yaml`](traefik-ingressroute.yaml) | Traefik v3 `IngressRoute` → UI Service port **3000** |
 
 **Typical flow:**

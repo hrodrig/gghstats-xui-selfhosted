@@ -1,20 +1,30 @@
 gghstats-xui is deployed!
 
-Two Deployments:
+{{- if .Values.gghstats.enabled }}
+
+In-cluster stack (gghstats.enabled=true):
   - {{ template "gghstats-xui.backendName" . }}  → gghstats (API-only, internal)
   - {{ template "gghstats-xui.uiName" . }}       → gghstats-xui (BFF dashboard)
 
-The BFF targets the backend at:
-  GGHSTATS_API_BASE = {{ default (printf "http://%s:%s" (include "gghstats-xui.backendName" .) (.Values.gghstats.service.port | default 8080 | toString)) .Values.xui.env.apiBase }}
+GitHub token Secret (backend sync): {{ default .Values.gghstats.githubToken.secretName .Values.gghstats.githubToken.existingSecret }}
+{{- else }}
 
-Get the dashboard URL:
+UI-only (gghstats.enabled=false) — no in-cluster gghstats / PVC / GitHub Secret.
+  - {{ template "gghstats-xui.uiName" . }}  → gghstats-xui (BFF dashboard)
+  - External API: {{ .Values.xui.env.apiBase }}
+{{- end }}
+
+BFF GGHSTATS_API_BASE =
+  {{ default (printf "http://%s:%s" (include "gghstats-xui.backendName" .) (.Values.gghstats.service.port | default 8080 | toString)) .Values.xui.env.apiBase }}
+
+API token Secret: {{ default .Values.apiToken.secretName .Values.apiToken.existingSecret }}
+
+Get the dashboard Service:
   kubectl get svc {{ template "gghstats-xui.uiName" . }}
 
-Port-forward to try it locally:
+Port-forward locally:
   kubectl port-forward svc/{{ template "gghstats-xui.uiName" . }} 3000:{{ .Values.xui.service.port }}
 
 Then open http://localhost:3000
 
-Secrets:
-  - GitHub token: {{ default .Values.gghstats.githubToken.secretName .Values.gghstats.githubToken.existingSecret }}
-  - API token:    {{ default .Values.apiToken.secretName .Values.apiToken.existingSecret }}
+Routing (Ingress / IngressRoute) is out of chart scope — see run/kubernetes/examples/.

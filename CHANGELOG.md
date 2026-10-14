@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - **Kubernetes operator path:** step-by-step chart README (secrets → helm → route → verify → auth → uninstall).
 - Document **Ingress / IngressRoute as out of chart scope**; examples to copy into **`~/gghstats-xui-selfhosted-data/`**: [`values.example.yaml`](run/kubernetes/examples/values.example.yaml) + [`traefik-ingressroute.yaml`](run/kubernetes/examples/traefik-ingressroute.yaml) (generic `xui.example.com`).
 - Root README **Pick a path** + hero [`assets/gghstats-xui-selfhosted-hero.png`](assets/gghstats-xui-selfhosted-hero.png); gitignore allowlist for **`assets/`**.
+- **Helm chart `0.2.0`:** optional in-cluster gghstats — `gghstats.enabled` (default `true`). When `false`, require `xui.env.apiBase` (external API); skip backend Deployment/Service/PVC/GitHub Secret. Example: [`values.ui-only.example.yaml`](run/kubernetes/examples/values.ui-only.example.yaml).
 
 ## [0.1.0] - 2026-10-12
 
