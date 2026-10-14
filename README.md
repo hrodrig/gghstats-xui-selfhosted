@@ -1,6 +1,6 @@
 # gghstats-xui-selfhosted
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/hrodrig/gghstats-xui-selfhosted/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/hrodrig/gghstats-xui-selfhosted/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Live demo](https://img.shields.io/badge/demo-xui.hermesrodriguez.com-0d7377)](https://xui.hermesrodriguez.com/)
 [![xui image on GHCR](https://img.shields.io/badge/image-ghcr.io%2Fhrodrig%2Fgghstats--xui-2496ED?logo=github)](https://github.com/hrodrig/gghstats-xui/pkgs/container/gghstats-xui)
@@ -62,7 +62,7 @@ Two containers on an internal Docker network:
 | Container | Image | Role | Exposed |
 |-----------|-------|------|---------|
 | `gghstats` | `ghcr.io/hrodrig/gghstats:v1.6.6` | GitHub traffic backend, **API-only** (`GGHSTATS_API_ONLY=true`), SQLite in `/data` | ❌ internal only |
-| `xui` | `ghcr.io/hrodrig/gghstats-xui:v0.1.0` | BFF + dashboard. Proxies `/api/*` → `http://gghstats:8080`, adds `x-api-token` | ✅ host port `3000` |
+| `xui` | `ghcr.io/hrodrig/gghstats-xui:v0.1.3` | BFF + dashboard. Proxies `/api/*` → `http://gghstats:8080`, adds `x-api-token` | ✅ host port `3000` |
 
 The **API token never reaches the browser** — it lives in both containers (`GGHSTATS_API_TOKEN`) and the xui BFF attaches it server-side on every proxied request.
 
@@ -106,7 +106,7 @@ docker run -d \
   -e GGHSTATS_API_TOKEN=your-shared-token \
   -p 3000:3000 \
   --name gghstats-xui \
-  ghcr.io/hrodrig/gghstats-xui:v0.1.0
+  ghcr.io/hrodrig/gghstats-xui:v0.1.3
 ```
 
 `GGHSTATS_API_BASE` points at a gghstats `serve` instance; for API-only, that backend runs with `GGHSTATS_API_ONLY=true`, but a full dashboard backend also works — the xui only calls `/api/*` routes.
@@ -219,7 +219,7 @@ data/
 
 - **[`VERSION`](VERSION)** — semver of **this repository** (manifests, docs, `run/`). On **`main`**, tag with **`v<semver>`**.
 - **`GGHSTATS_VERSION`** in **`${GGHSTATS_HOST_DATA}/.env`** — the upstream **gghstats** backend image tag on GHCR (e.g. `v1.6.6`).
-- **`GGHSTATS_XUI_VERSION`** in **`${GGHSTATS_HOST_DATA}/.env`** — the **gghstats-xui** dashboard image tag on GHCR (e.g. `v0.1.0`).
+- **`GGHSTATS_XUI_VERSION`** in **`${GGHSTATS_HOST_DATA}/.env`** — the **gghstats-xui** dashboard image tag on GHCR (e.g. `v0.1.3`).
 
 Three independent numbers. Upgrade the dashboard or backend by editing the matching env var, then **pull + `up -d`** (not `restart` alone, which does not swap images).
 

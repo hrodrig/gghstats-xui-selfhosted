@@ -15,7 +15,7 @@ Pick a mode below. Commands are documented in each subdirectory's `README.md`.
 Always use published image tags that match your desired releases:
 
 - **`GGHSTATS_VERSION`** → [gghstats](https://github.com/hrodrig/gghstats/releases) backend image tag (e.g. `v1.6.6`).
-- **`GGHSTATS_XUI_VERSION`** → [gghstats-xui](https://github.com/hrodrig/gghstats-xui) dashboard image tag (e.g. `v0.1.0`).
+- **`GGHSTATS_XUI_VERSION`** → [gghstats-xui](https://github.com/hrodrig/gghstats-xui) dashboard image tag (e.g. `v0.1.3`).
 
 **Upgrade:** edit the matching var in **`${GGHSTATS_HOST_DATA}/.env`**, then **`pull`** + **`up -d`** (recreate). `restart` does not swap images.
 

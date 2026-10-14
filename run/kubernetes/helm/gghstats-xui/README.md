@@ -3,7 +3,7 @@
 | Resource | Image | Role | Exposed |
 |----------|-------|------|---------|
 | `…-backend` | `ghcr.io/hrodrig/gghstats:v1.6.6` | gghstats API-only + SQLite PVC | ClusterIP only (**optional**) |
-| `…-ui` | `ghcr.io/hrodrig/gghstats-xui:v0.1.0` | BFF dashboard | ClusterIP (route it yourself) |
+| `…-ui` | `ghcr.io/hrodrig/gghstats-xui:v0.1.3` | BFF dashboard | ClusterIP (route it yourself) |
 
 **Modes:**
 
@@ -154,7 +154,7 @@ kubectl delete -f ~/gghstats-xui-selfhosted-data/traefik-ingressroute.yaml   # i
 |-----|---------|---------|
 | `gghstats.enabled` | `true` | Deploy in-cluster gghstats; `false` = UI-only + require `xui.env.apiBase` |
 | `gghstats.image.tag` | `v1.6.6` | Backend gghstats image |
-| `xui.image.tag` | `v0.1.0` | Dashboard image |
+| `xui.image.tag` | `v0.1.3` | Dashboard image |
 | `gghstats.env.apiOnly` | `"true"` | API-only mode (leave `true` when backend enabled) |
 | `gghstats.env.filter` | `"*"` | Repo filter for sync |
 | `xui.env.apiBase` | `""` | External gghstats URL (required if `gghstats.enabled=false`) |
